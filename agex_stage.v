@@ -34,12 +34,11 @@ module AGEX_STAGE(
   reg br_cond_AGEX; // 1 means a branch condition is satisified. 0 means a branch condition is not satisifed
   reg [`DBITS-1:0] arith_AGEX;
   reg reg_wr_AGEX;
+  reg [`DBITS-1:0] pctarget_AGEX;
 
 
 
  // **TODO: Complete the rest of the pipeline
-
-
   always @ (*) begin
     case (op_I_AGEX)
       `BEQ_I : br_cond_AGEX = rs1_val_AGEX == rs2_val_AGEX; // write correct code to check the branch condition.
@@ -60,6 +59,10 @@ module AGEX_STAGE(
   always @ (*) begin
   case (op_I_AGEX)
     `ADD_I: begin
+        arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
+        reg_wr_AGEX = 1'b1;
+    end
+    `ADDI_I: begin
         arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
         reg_wr_AGEX = 1'b1;
     end
@@ -67,22 +70,26 @@ module AGEX_STAGE(
         arith_AGEX = {`DBITS{1'b0}};
         reg_wr_AGEX = 1'b0;
     end
-	 endcase
+    endcase
   end
 
-// branch target needs to be computed here
-// computed branch target needs to send to other pipeline stages (pctarget_AGEX)
+  // branch target needs to be computed here
+  // computed branch target needs to send to other pipeline stages (pctarget_AGEX)
 
-always @(*)begin
-/*
-  if (op_I_AGEX == `JAL_I)
-  ...
-  */
-end
+  always @(*)begin
+    if (op_I_AGEX == `JAL_I || op_I_AGEX == `JALR_I) begin
+      pctarget_AGEX = PC_AGEX + 4;
+    end else if (br_cond_AGEX) begin
+      pctarget_AGEX = PC_AGEX + sxt_imm_AGEX;
+    end else begin
+      pctarget_AGEX = {`DBITS{1'b0}};
+    end
+  end
 
+  assign from_AGEX_to_FE = {br_cond_AGEX, pctarget_AGEX};
+  assign from_AGEX_to_DE = {br_cond_AGEX};
 
-
-    assign  {
+  assign  {
                                   valid_AGEX,
                                   inst_AGEX,
                                   PC_AGEX,

@@ -243,6 +243,7 @@ end
 
 
   wire pipeline_stall_DE;
+  assign {pipeline_stall_DE} = from_AGEX_to_DE;
   assign from_DE_to_FE = {pipeline_stall_DE}; // pass the DE stage stall signal to FE stage
 
 
@@ -325,7 +326,7 @@ always @ (posedge clk) begin // you need to expand this always block
       if (pipeline_stall_DE)
         DE_latch <= {`DE_latch_WIDTH{1'b0}};
       else
-          DE_latch <= DE_latch_contents;
+        DE_latch <= DE_latch_contents;
      end
   end
 
