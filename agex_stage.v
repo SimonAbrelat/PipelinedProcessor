@@ -27,6 +27,7 @@ module AGEX_STAGE(
   wire [`DBITS-1:0] inst_count_AGEX;
   wire [`DBITS-1:0] pcplus_AGEX;
   wire [`IOPBITS-1:0] op_I_AGEX;
+  wire [`TYPENOBITS-1:0] type_I_AGEX;
   wire [`DBITS-1:0] sxt_imm_AGEX;
   wire [`DBITS-1:0] rs1_val_AGEX;
   wire [`DBITS-1:0] rs2_val_AGEX;
@@ -87,20 +88,21 @@ module AGEX_STAGE(
   end
 
   assign from_AGEX_to_FE = {br_cond_AGEX, pctarget_AGEX};
-  assign from_AGEX_to_DE = {br_cond_AGEX};
+  assign from_AGEX_to_DE = {br_cond_AGEX, inst_AGEX[11:7], type_I_AGEX};
 
-  assign  {
-                                  valid_AGEX,
-                                  inst_AGEX,
-                                  PC_AGEX,
-                                  pcplus_AGEX,
-                                  op_I_AGEX,
-                                  inst_count_AGEX,
-                                  sxt_imm_AGEX,
-                                  rs1_val_AGEX,
-                                  rs2_val_AGEX
-                                          // more signals might need
-                                  } = from_DE_latch;
+  assign {
+                                valid_AGEX,
+                                inst_AGEX,
+                                PC_AGEX,
+                                pcplus_AGEX,
+                                op_I_AGEX,
+                                type_I_AGEX,
+                                inst_count_AGEX,
+                                sxt_imm_AGEX,
+                                rs1_val_AGEX,
+                                rs2_val_AGEX
+                                        // more signals might need
+                                } = from_DE_latch;
 
 
   assign AGEX_latch_contents = {
@@ -108,6 +110,7 @@ module AGEX_STAGE(
                                 inst_AGEX,
                                 PC_AGEX,
                                 op_I_AGEX,
+                                type_I_AGEX,
                                 inst_count_AGEX,
                                 arith_AGEX,
                                 reg_wr_AGEX

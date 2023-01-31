@@ -55,16 +55,6 @@ module FE_STAGE(
 
   // reading instruction from imem
   assign inst_FE = imem[PC_FE_latch[`IMEMADDRBITS-1:`IMEMWORDBITS]];  // this code works. imem is stored 4B together
-  /*
-  always @(*)begin
-    if (branch_cond) begin
-      PC_FE_latch = PC_Target;
-      inst_FE = imem[PC_Target[`IMEMADDRBITS-1:`IMEMWORDBITS]];  // this code works. imem is stored 4B together
-    end else begin
-      inst_FE = imem[PC_FE_latch[`IMEMADDRBITS-1:`IMEMWORDBITS]];  // this code works. imem is stored 4B together
-    end
-  end
-  */
 
   // wire to send the FE latch contents to the DE stage
   assign FE_latch_out = FE_latch;
@@ -89,7 +79,7 @@ module FE_STAGE(
 
 
   // **TODO: Complete the rest of the pipeline
-  assign stall_pipe_FE = 0;  // you need to modify this line for your design
+  assign {stall_pipe_FE} = from_DE_to_FE;  // you need to modify this line for your design
 
   always @ (posedge clk) begin
   /* you need to extend this always block */
@@ -105,8 +95,9 @@ module FE_STAGE(
         PC_FE_latch <= pcplus_FE;
         inst_count_FE <= inst_count_FE + 1;
       end
-    else
-      PC_FE_latch <= PC_FE_latch;
+      else begin
+        PC_FE_latch <= PC_FE_latch;
+      end
   end
 
 
@@ -123,9 +114,13 @@ module FE_STAGE(
          if  (stall_pipe_FE) begin
             FE_latch <= FE_latch;
             inst_count_FE <= inst_count_FE + 1;
-            end
-          else
+          end
+          else if (branch_cond) begin
+            FE_latch <= {`FE_latch_WIDTH{1'b0}};
+          end
+          else begin
             FE_latch <= FE_latch_contents;
+          end
         end
   end
 

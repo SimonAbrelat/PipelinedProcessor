@@ -13,6 +13,7 @@ module WB_STAGE(
 
   wire valid_WB;
   wire [`IOPBITS-1:0] op_I_WB;
+  wire [`TYPENOBITS-1:0] type_I_WB;
   wire [`INSTBITS-1:0] inst_WB;
   wire [`DBITS-1:0] PC_WB;
   wire [`DBITS-1:0] inst_count_WB;
@@ -33,6 +34,7 @@ module WB_STAGE(
                                 inst_WB,
                                 PC_WB,
                                 op_I_WB,
+                                type_I_WB,
                                 inst_count_WB,
                                 regval_WB,
                                 wr_reg_WB

@@ -29,6 +29,7 @@ module MEM_STAGE(
 
 
   wire [`IOPBITS-1:0] op_I_MEM;
+  wire [`TYPENOBITS-1:0] type_I_MEM;
   wire [`DBITS-1:0] inst_count_MEM;
   wire [`INSTBITS-1:0] inst_MEM;
   wire [`DBITS-1:0] PC_MEM;
@@ -60,6 +61,8 @@ module MEM_STAGE(
 
   `UNUSED_VAR (rd_mem_MEM)
 
+   assign from_MEM_to_DE = {inst_MEM[11:7], type_I_MEM};
+
    assign MEM_latch_out = MEM_latch;
 
    assign {
@@ -67,6 +70,7 @@ module MEM_STAGE(
                                 inst_MEM,
                                 PC_MEM,
                                 op_I_MEM,
+                                type_I_MEM,
                                 inst_count_MEM,
                                 regval_MEM,
                                 reg_wr_MEM
@@ -80,6 +84,7 @@ module MEM_STAGE(
                                 inst_MEM,
                                 PC_MEM,
                                 op_I_MEM,
+                                type_I_MEM,
                                 inst_count_MEM,
                                 regval_MEM,
                                 reg_wr_MEM

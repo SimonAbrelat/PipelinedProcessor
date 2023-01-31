@@ -242,8 +242,27 @@ end
   assign { wr_reg_WB, wregno_WB, regval_WB} = from_WB_to_DE;
 
 
-  wire pipeline_stall_DE;
-  assign {pipeline_stall_DE} = from_AGEX_to_DE;
+  wire [`REGNOBITS-1:0] rd_AGEX; // AGEX destination register ID
+  wire [`REGNOBITS-1:0] rd_MEM; // MEM destination register ID
+  wire [`TYPENOBITS-1:0] op_Type_AGEX; // AGEX destination register ID
+  wire [`TYPENOBITS-1:0] op_Type_MEM; // MEM destination register ID
+  reg pipeline_stall_DE;
+  wire branch_invalid;
+  assign {branch_invalid, rd_AGEX, op_Type_AGEX} = from_AGEX_to_DE;
+  assign {rd_MEM, op_Type_MEM} = from_MEM_to_DE;
+  //
+  always @ (*) begin
+    if (op_Type_AGEX != 0 && op_Type_AGEX != `S_Type) begin
+      pipeline_stall_DE = ((rd_AGEX == rs1_DE) || (rd_AGEX == rs2_DE));
+    end
+    else if (op_Type_MEM != 0 && op_Type_MEM != `S_Type) begin
+      pipeline_stall_DE = ((rd_MEM == rs1_DE) || (rd_MEM == rs2_DE));
+    end
+    else begin
+      pipeline_stall_DE = 0;
+    end
+  end
+
   assign from_DE_to_FE = {pipeline_stall_DE}; // pass the DE stage stall signal to FE stage
 
 
@@ -266,6 +285,7 @@ end
                                   PC_DE,
                                   pcplus_DE,
                                   op_I_DE,
+                                  type_I_DE,
                                   inst_count_DE,
                                   sxt_imm_DE,
                                   regs[rs1_DE],
@@ -323,10 +343,14 @@ always @ (posedge clk) begin // you need to expand this always block
       DE_latch <= {`DE_latch_WIDTH{1'b0}};
       end
      else begin
-      if (pipeline_stall_DE)
-        DE_latch <= {`DE_latch_WIDTH{1'b0}};
-      else
-        DE_latch <= DE_latch_contents;
+        if (pipeline_stall_DE) begin
+          DE_latch <= {`DE_latch_WIDTH{1'b0}};
+        end else if (branch_invalid) begin
+          DE_latch <= {`DE_latch_WIDTH{1'b0}};
+        end
+        else begin
+          DE_latch <= DE_latch_contents;
+        end
      end
   end
 
