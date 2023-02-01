@@ -33,7 +33,7 @@ module FE_STAGE(
 
   /* pipeline latch */
   reg [`FE_latch_WIDTH-1:0] FE_latch;  // FE latch
-  wire valid_FE = 1;
+  wire valid_FE = (inst_FE != {`DBITS{1'b0}});
 
   reg [`DBITS-1:0] PC_FE_latch; // PC latch in the FE stage   // you could use a part of FE_latch as a PC latch as well
   //reg [`DBITS-1:0] PC_FE_latch; // PC latch in the FE stage   // you could use a part of FE_latch as a PC latch as well
@@ -83,7 +83,7 @@ module FE_STAGE(
 
   always @ (posedge clk) begin
   /* you need to extend this always block */
-   if (reset) begin
+      if (reset) begin
         PC_FE_latch <= `STARTPC;
         inst_count_FE <= 1;  /* inst_count starts from 1 for easy human reading. 1st fetch instructions can have 1 */
       end
@@ -111,12 +111,12 @@ module FE_STAGE(
      else
         begin
          // this is just an example. you need to expand the contents of if/else
-         if  (stall_pipe_FE) begin
-            FE_latch <= FE_latch;
-            inst_count_FE <= inst_count_FE + 1;
-          end
-          else if (branch_cond) begin
+          if (branch_cond) begin
             FE_latch <= {`FE_latch_WIDTH{1'b0}};
+          end
+          else if (stall_pipe_FE) begin
+            FE_latch <= FE_latch;
+            inst_count_FE <= inst_count_FE + 1; // inst count or cycle count
           end
           else begin
             FE_latch <= FE_latch_contents;

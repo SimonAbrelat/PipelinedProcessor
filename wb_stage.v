@@ -20,7 +20,8 @@ module WB_STAGE(
 
 
 
-  wire wr_reg_WB; // is this instruction writing into a register file?
+  wire wr_reg_WB = (type_I_WB != 0 && type_I_WB != `S_Type); // is this instruction writing into a register file?
+
 
   wire [`REGNOBITS-1:0] wregno_WB; // destination register ID
   wire [`DBITS-1:0] regval_WB;  // the contents to be written in the register file (or CSR )
@@ -36,8 +37,7 @@ module WB_STAGE(
                                 op_I_WB,
                                 type_I_WB,
                                 inst_count_WB,
-                                regval_WB,
-                                wr_reg_WB
+                                regval_WB
                                 // more signals might need
                                  } = from_MEM_latch;
 

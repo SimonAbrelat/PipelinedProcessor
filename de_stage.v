@@ -251,16 +251,30 @@ end
   assign {branch_invalid, rd_AGEX, op_Type_AGEX} = from_AGEX_to_DE;
   assign {rd_MEM, op_Type_MEM} = from_MEM_to_DE;
   //
-  always @ (*) begin
+  always @ (*) begin // TODO u and i type have invalid srcregs
+    /*
     if (op_Type_AGEX != 0 && op_Type_AGEX != `S_Type) begin
       pipeline_stall_DE = ((rd_AGEX == rs1_DE) || (rd_AGEX == rs2_DE));
     end
-    else if (op_Type_MEM != 0 && op_Type_MEM != `S_Type) begin
+    if (op_Type_MEM != 0 && op_Type_MEM != `S_Type) begin
       pipeline_stall_DE = ((rd_MEM == rs1_DE) || (rd_MEM == rs2_DE));
+    end
+    */
+   /*
+    if (
+        (( op_Type_AGEX != 0 && op_Type_AGEX != `S_Type) &&((rd_AGEX == rs1_DE) || (rd_AGEX == rs2_DE)))
+        || ((op_Type_MEM != 0 && op_Type_MEM != `S_Type) && ((rd_MEM == rs1_DE) || (rd_MEM == rs2_DE)))
+        ) begin
+      pipeline_stall_DE = 1;
     end
     else begin
       pipeline_stall_DE = 0;
     end
+    */
+
+
+    pipeline_stall_DE =  ((( op_Type_AGEX != 0 && op_Type_AGEX != `S_Type) &&((rd_AGEX == rs1_DE) || (rd_AGEX == rs2_DE)))
+        || ((op_Type_MEM != 0 && op_Type_MEM != `S_Type) && ((rd_MEM == rs1_DE) || (rd_MEM == rs2_DE))));
   end
 
   assign from_DE_to_FE = {pipeline_stall_DE}; // pass the DE stage stall signal to FE stage

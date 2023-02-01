@@ -72,8 +72,7 @@ module MEM_STAGE(
                                 op_I_MEM,
                                 type_I_MEM,
                                 inst_count_MEM,
-                                regval_MEM,
-                                reg_wr_MEM
+                                regval_MEM
                                  // more signals might need
                                  } = from_AGEX_latch;
 
@@ -86,8 +85,7 @@ module MEM_STAGE(
                                 op_I_MEM,
                                 type_I_MEM,
                                 inst_count_MEM,
-                                regval_MEM,
-                                reg_wr_MEM
+                                regval_MEM
                                         // more signals might need
    };
 

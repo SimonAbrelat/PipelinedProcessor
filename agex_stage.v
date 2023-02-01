@@ -34,7 +34,6 @@ module AGEX_STAGE(
   wire [`REGNOBITS-1:0] rd_AGEX;
   reg br_cond_AGEX; // 1 means a branch condition is satisified. 0 means a branch condition is not satisifed
   reg [`DBITS-1:0] arith_AGEX;
-  reg reg_wr_AGEX;
   reg [`DBITS-1:0] pctarget_AGEX;
 
 
@@ -61,15 +60,12 @@ module AGEX_STAGE(
   case (op_I_AGEX)
     `ADD_I: begin
         arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
-        reg_wr_AGEX = 1'b1;
     end
     `ADDI_I: begin
         arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
-        reg_wr_AGEX = 1'b1;
     end
     default: begin
         arith_AGEX = {`DBITS{1'b0}};
-        reg_wr_AGEX = 1'b0;
     end
     endcase
   end
@@ -112,8 +108,7 @@ module AGEX_STAGE(
                                 op_I_AGEX,
                                 type_I_AGEX,
                                 inst_count_AGEX,
-                                arith_AGEX,
-                                reg_wr_AGEX
+                                arith_AGEX
                                        // more signals might need
                                  };
 
