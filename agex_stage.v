@@ -28,13 +28,20 @@ module AGEX_STAGE(
   wire [`DBITS-1:0] pcplus_AGEX;
   wire [`IOPBITS-1:0] op_I_AGEX;
   wire [`TYPENOBITS-1:0] type_I_AGEX;
-  wire [`DBITS-1:0] sxt_imm_AGEX;
-  wire [`DBITS-1:0] rs1_val_AGEX;
-  wire [`DBITS-1:0] rs2_val_AGEX;
+  wire signed [`DBITS-1:0] sxt_imm_AGEX;
+  wire signed [`DBITS-1:0] rs1_val_AGEX; // signed or unsigned?
+  wire signed [`DBITS-1:0] rs2_val_AGEX; // signed or unsigned?
   wire [`REGNOBITS-1:0] rd_AGEX;
   reg br_cond_AGEX; // 1 means a branch condition is satisified. 0 means a branch condition is not satisifed
-  reg [`DBITS-1:0] arith_AGEX;
+  reg signed [`DBITS-1:0] arith_AGEX;
   reg [`DBITS-1:0] pctarget_AGEX;
+
+  wire [`DBITS-1:0] rs1_val_unsigned;
+  wire [`DBITS-1:0] rs2_val_unsigned;
+  assign rs1_val_unsigned = rs1_val_AGEX;
+  assign rs2_val_unsigned = rs2_val_AGEX;
+
+
 
 
 
@@ -42,13 +49,14 @@ module AGEX_STAGE(
   always @ (*) begin
     case (op_I_AGEX)
       `BEQ_I : br_cond_AGEX = rs1_val_AGEX == rs2_val_AGEX; // write correct code to check the branch condition.
-      /*
-      `BNE_I : ...
-      `BLT_I : ...
-      `BGE_I : ...
-      `BLTU_I: ..
-      `BGEU_I : ...
-      */
+      `BNE_I : br_cond_AGEX = rs1_val_AGEX != rs2_val_AGEX;
+      `BLT_I : br_cond_AGEX = rs1_val_AGEX < rs2_val_AGEX;
+      `BGE_I : br_cond_AGEX = rs1_val_AGEX >= rs2_val_AGEX;
+      `BLTU_I: br_cond_AGEX = rs1_val_unsigned < rs2_val_unsigned;// unsigned comparison
+      `BGEU_I : br_cond_AGEX = rs1_val_unsigned >= rs2_val_unsigned;
+      `JR_I,
+      `JALR_I,
+      `JAL_I: br_cond_AGEX = 1'b1;
       default : br_cond_AGEX = 1'b0;
     endcase
   end
@@ -59,23 +67,41 @@ module AGEX_STAGE(
   always @ (*) begin
   case (op_I_AGEX)
     `ADD_I: begin
-        arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
+      arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
     end
     `ADDI_I: begin
-        arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
+      arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
+    end
+    `SUB_I: begin
+      arith_AGEX = rs1_val_AGEX - rs2_val_AGEX;
+    end
+    `JAL_I,
+    `JALR_I: begin
+      arith_AGEX = PC_AGEX + 'd4;
+    end
+    `LUI_I: begin
+      arith_AGEX = sxt_imm_AGEX ;//<< 'd12; //R[rd] = imm << 12
+    end
+    `AUIPC_I: begin
+      arith_AGEX = PC_AGEX + (sxt_imm_AGEX );//<< 12); // R[rd] = PC + ( imm << 12 )
     end
     default: begin
-        arith_AGEX = {`DBITS{1'b0}};
+      arith_AGEX = {`DBITS{1'b0}};
     end
-    endcase
+  endcase
   end
 
-  // branch target needs to be computed here
+
+  // branch / jump target needs to be computed here
   // computed branch target needs to send to other pipeline stages (pctarget_AGEX)
 
   always @(*)begin
-    if (op_I_AGEX == `JAL_I || op_I_AGEX == `JALR_I) begin
-      pctarget_AGEX = PC_AGEX + 4;
+    if (op_I_AGEX == `JAL_I) begin
+      pctarget_AGEX = PC_AGEX + sxt_imm_AGEX; // PC = PC + sext(imm)
+    end else if (op_I_AGEX == `JALR_I) begin
+      pctarget_AGEX = (rs1_val_AGEX + sxt_imm_AGEX) & 'hFFFFFFFE; // PC = ( R[rs1] + sext(imm) ) & 0xfffffffe
+    end else if (op_I_AGEX == `JR_I) begin
+      pctarget_AGEX = rs1_val_AGEX; // PC = R[rs1]
     end else if (br_cond_AGEX) begin
       pctarget_AGEX = PC_AGEX + sxt_imm_AGEX;
     end else begin
@@ -95,7 +121,7 @@ module AGEX_STAGE(
                                 type_I_AGEX,
                                 inst_count_AGEX,
                                 sxt_imm_AGEX,
-                                rs1_val_AGEX,
+                                rs1_val_AGEX, // TODO: sometimes goes high when in a stall
                                 rs2_val_AGEX
                                         // more signals might need
                                 } = from_DE_latch;

@@ -191,7 +191,7 @@ end
 
 //////////////////////////////////
     // **TODO: Complete the rest of the pipeline
-   reg  [`DBITS-1:0] sxt_imm_DE;
+   reg  signed [`DBITS-1:0] sxt_imm_DE; // TODO is this necessary?
 always @(*) begin
   case (type_immediate_DE )
     // TODO: DOUBLE CHECK THIS SHIT
@@ -347,7 +347,7 @@ end
       regs[30] <= {`DBITS{1'b0}};
       regs[31] <= {`DBITS{1'b0}};
     end
-    else if(wr_reg_WB)
+    else if(wr_reg_WB && wregno_WB != 0)
 		  	regs[wregno_WB] <= regval_WB;
   end
 
