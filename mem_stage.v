@@ -34,7 +34,8 @@ module MEM_STAGE(
   wire [`INSTBITS-1:0] inst_MEM;
   wire [`DBITS-1:0] PC_MEM;
   wire [`DBITS-1:0] regval_MEM;
-  wire reg_wr_MEM;
+  reg [`DBITS-1:0] regval_MEM_reg;
+  //wire reg_wr_MEM = (op_I_MEM==`SW_I);
 
 
 
@@ -44,7 +45,7 @@ module MEM_STAGE(
   wire [`DBITS-1:0] memaddr_MEM;  // memory address. need to be computed in AGEX stage and pass through a latch
   wire [`DBITS-1:0] rd_val_MEM;  // memory read value
   wire [`DBITS-1:0] wr_val_MEM;  // memory write value
-  wire wr_mem_MEM;  // is this instruction writing a value into memory?
+  wire wr_mem_MEM = (op_I_MEM==`SW_I);  // is this instruction writing a value into memory?
   // Read from D-MEM  (read code is completed if there is a correct memaddr_MEM )
   assign rd_val_MEM = dmem[memaddr_MEM[`DMEMADDRBITS-1:`DMEMWORDBITS]];
 
@@ -54,9 +55,19 @@ module MEM_STAGE(
   if(wr_mem_MEM)
     // fill out the correct signal name to do write operations
 
-      dmem[memaddr_MEM[`DMEMADDRBITS-1:`DMEMWORDBITS]] <= wr_val_MEM;
+      dmem[memaddr_MEM[`DMEMADDRBITS-1:`DMEMWORDBITS]] <= regval_MEM_reg;
   end
-  `UNUSED_VAR (memaddr_MEM)
+
+
+  always @(*) begin
+    case(op_I_MEM)
+      `LW_I: regval_MEM_reg = rd_val_MEM;
+      default: regval_MEM_reg = regval_MEM;
+    endcase
+  end
+
+
+  //`UNUSED_VAR (memaddr_MEM)
 
 
   `UNUSED_VAR (rd_mem_MEM)
@@ -72,7 +83,8 @@ module MEM_STAGE(
                                 op_I_MEM,
                                 type_I_MEM,
                                 inst_count_MEM,
-                                regval_MEM
+                                regval_MEM,
+                                memaddr_MEM
                                  // more signals might need
                                  } = from_AGEX_latch;
 
@@ -85,7 +97,7 @@ module MEM_STAGE(
                                 op_I_MEM,
                                 type_I_MEM,
                                 inst_count_MEM,
-                                regval_MEM
+                                regval_MEM_reg
                                         // more signals might need
    };
 

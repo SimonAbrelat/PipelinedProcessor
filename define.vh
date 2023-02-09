@@ -18,7 +18,7 @@
 // address space is m 0x00000000 to 0x000fffff
   // [NOTICE] please note that both imem and dmem use the SAME "IDMEMINITFILE".
   // you need to change this line to change which test file to read
-  `define IDMEMINITFILE "/home/anna/Spring23/ProcessorDesign/PipelinedProcessor/test/part2/test9.mem"
+  `define IDMEMINITFILE "/home/anna/Spring23/ProcessorDesign/PipelinedProcessor/test/part3/xor.mem"
   `define IMEMADDRBITS  16
   `define IMEMWORDBITS  2
   `define IMEMWORDS	  (1 << (`IMEMADDRBITS - `IMEMWORDBITS))
@@ -204,7 +204,7 @@
  `define FE_latch_WIDTH  (1 + `INSTBITS+`DBITS+ `DBITS + `DBITS)
   `define DE_latch_WIDTH  (1 + `INSTBITS+`DBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS + `DBITS+ `DBITS)
 
-  `define AGEX_latch_WIDTH   (1 + `INSTBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS)
+  `define AGEX_latch_WIDTH   (1 + `INSTBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS + `DBITS)
   `define MEM_latch_WIDTH    (1 + `INSTBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS)
 
   `define from_DE_to_FE_WIDTH  (1)

@@ -34,12 +34,15 @@ module AGEX_STAGE(
   wire [`REGNOBITS-1:0] rd_AGEX;
   reg br_cond_AGEX; // 1 means a branch condition is satisified. 0 means a branch condition is not satisifed
   reg signed [`DBITS-1:0] arith_AGEX;
+  reg [`DBITS-1:0] memaddr_AGEX;
   reg [`DBITS-1:0] pctarget_AGEX;
 
   wire [`DBITS-1:0] rs1_val_unsigned;
   wire [`DBITS-1:0] rs2_val_unsigned;
+  wire [`DBITS-1:0] imm_unsigned;
   assign rs1_val_unsigned = rs1_val_AGEX;
   assign rs2_val_unsigned = rs2_val_AGEX;
+  assign imm_unsigned = sxt_imm_AGEX;
 
 
 
@@ -66,29 +69,42 @@ module AGEX_STAGE(
 
   always @ (*) begin
   case (op_I_AGEX)
-    `ADD_I: begin
-      arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
-    end
-    `ADDI_I: begin
-      arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
-    end
-    `SUB_I: begin
-      arith_AGEX = rs1_val_AGEX - rs2_val_AGEX;
-    end
+    `ADD_I: arith_AGEX = rs1_val_AGEX + rs2_val_AGEX;
+    `ADDI_I: arith_AGEX = rs1_val_AGEX + sxt_imm_AGEX;
+    `SUB_I: arith_AGEX = rs1_val_AGEX - rs2_val_AGEX;
+    `MUL_I: arith_AGEX = rs1_val_AGEX * rs2_val_AGEX;
+    `AND_I: arith_AGEX = rs1_val_AGEX & rs2_val_AGEX;
+    `ANDI_I: arith_AGEX = rs1_val_AGEX & sxt_imm_AGEX;
+    `OR_I: arith_AGEX = rs1_val_AGEX | rs2_val_AGEX;
+    `ORI_I: arith_AGEX = rs1_val_AGEX | sxt_imm_AGEX;
+    `XOR_I: arith_AGEX = rs1_val_AGEX ^ rs2_val_AGEX;
+    `XORI_I: arith_AGEX = rs1_val_AGEX ^ sxt_imm_AGEX;
+    `SLT_I: arith_AGEX = {31'b0,(rs1_val_AGEX < rs2_val_AGEX)}; 
+    `SLTI_I: arith_AGEX = {31'b0,(rs1_val_AGEX < sxt_imm_AGEX)}; 
+    `SLTU_I: arith_AGEX = {31'b0, (rs1_val_unsigned < rs2_val_unsigned)};
+    `SLTIU_I: arith_AGEX = {31'b0, (rs1_val_unsigned < imm_unsigned)};
+    //`SRA_I: arith_AGEX = rs1_val_AGEX >>> {{20{rs2_val_AGEX[4]}},rs2_val_AGEX[4:0]}; // todo check
+    `SRA_I: arith_AGEX = rs1_val_AGEX >>> rs2_val_AGEX[4:0]; // todo check
+    `SRAI_I: arith_AGEX = rs1_val_AGEX>>> sxt_imm_AGEX[4:0]; // undo the sext
+    `SRL_I: arith_AGEX = rs1_val_AGEX >> rs2_val_AGEX[4:0];
+    `SRLI_I: arith_AGEX = rs1_val_AGEX >> sxt_imm_AGEX[4:0]; // undo sext
+    `SLL_I: arith_AGEX = rs1_val_AGEX << rs2_val_AGEX[4:0];
+    `SLLI_I: arith_AGEX = rs1_val_AGEX << sxt_imm_AGEX[4:0]; // undo sxt
     `JAL_I,
-    `JALR_I: begin
-      arith_AGEX = PC_AGEX + 'd4;
-    end
-    `LUI_I: begin
-      arith_AGEX = sxt_imm_AGEX ;//<< 'd12; //R[rd] = imm << 12
-    end
-    `AUIPC_I: begin
-      arith_AGEX = PC_AGEX + (sxt_imm_AGEX );//<< 12); // R[rd] = PC + ( imm << 12 )
-    end
-    default: begin
-      arith_AGEX = {`DBITS{1'b0}};
-    end
+    `JALR_I: arith_AGEX = PC_AGEX + 'd4;
+    `LUI_I: arith_AGEX = sxt_imm_AGEX ;//<< 'd12; //R[rd] = imm << 12
+    `AUIPC_I: arith_AGEX = PC_AGEX + (sxt_imm_AGEX );//<< 12); // R[rd] = PC + ( imm << 12 )
+    `SW_I: arith_AGEX = rs2_val_AGEX;
+    default: arith_AGEX = {`DBITS{1'b0}};
   endcase
+  end
+
+
+  // compute memaddr
+  always @(*) begin
+    case(op_I_AGEX)
+      `LW_I: memaddr_AGEX = (rs1_val_AGEX + sxt_imm_AGEX) ;
+    endcase
   end
 
 
@@ -134,7 +150,8 @@ module AGEX_STAGE(
                                 op_I_AGEX,
                                 type_I_AGEX,
                                 inst_count_AGEX,
-                                arith_AGEX
+                                arith_AGEX,
+                                memaddr_AGEX
                                        // more signals might need
                                  };
 
