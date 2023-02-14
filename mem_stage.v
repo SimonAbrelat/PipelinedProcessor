@@ -34,7 +34,7 @@ module MEM_STAGE(
   wire [`INSTBITS-1:0] inst_MEM;
   wire [`DBITS-1:0] PC_MEM;
   wire [`DBITS-1:0] regval_MEM;
-  reg [`DBITS-1:0] regval_MEM_reg;
+  wire [`DBITS-1:0] mod_regval_MEM;
   //wire reg_wr_MEM = (op_I_MEM==`SW_I);
 
 
@@ -54,23 +54,23 @@ module MEM_STAGE(
   always @ (posedge clk) begin
   if(wr_mem_MEM)
     // fill out the correct signal name to do write operations
-
-      dmem[memaddr_MEM[`DMEMADDRBITS-1:`DMEMWORDBITS]] <= regval_MEM_reg;
+      dmem[memaddr_MEM[`DMEMADDRBITS-1:`DMEMWORDBITS]] <= regval_MEM;
   end
 
 
+  assign mod_regval_MEM = (op_I_MEM == `LW_I) ? rd_val_MEM : regval_MEM;
+  /*
   always @(*) begin
     case(op_I_MEM)
-      `LW_I: regval_MEM_reg = rd_val_MEM;
-      default: regval_MEM_reg = regval_MEM;
+      `LW_I: mod_regval_MEM = rd_val_MEM;
+      default: mod_regval_MEM = regval_MEM;
     endcase
   end
+  */
 
 
   //`UNUSED_VAR (memaddr_MEM)
-
-
-  `UNUSED_VAR (rd_mem_MEM)
+  //`UNUSED_VAR (rd_mem_MEM)
 
    assign from_MEM_to_DE = {inst_MEM[11:7], type_I_MEM};
 
@@ -97,7 +97,7 @@ module MEM_STAGE(
                                 op_I_MEM,
                                 type_I_MEM,
                                 inst_count_MEM,
-                                regval_MEM_reg
+                                mod_regval_MEM
                                         // more signals might need
    };
 

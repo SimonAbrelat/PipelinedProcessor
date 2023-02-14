@@ -18,7 +18,7 @@
 // address space is m 0x00000000 to 0x000fffff
   // [NOTICE] please note that both imem and dmem use the SAME "IDMEMINITFILE".
   // you need to change this line to change which test file to read
-  `define IDMEMINITFILE "/home/anna/Spring23/ProcessorDesign/PipelinedProcessor/test/part3/xor.mem"
+  `define IDMEMINITFILE "/home/simon/Documents/School/CS3220/gt-cs3220.github.io/Spring_2023/project1/test/part3/xor.mem"
   `define IMEMADDRBITS  16
   `define IMEMWORDBITS  2
   `define IMEMWORDS	  (1 << (`IMEMADDRBITS - `IMEMWORDBITS))

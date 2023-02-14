@@ -79,8 +79,8 @@ module AGEX_STAGE(
     `ORI_I: arith_AGEX = rs1_val_AGEX | sxt_imm_AGEX;
     `XOR_I: arith_AGEX = rs1_val_AGEX ^ rs2_val_AGEX;
     `XORI_I: arith_AGEX = rs1_val_AGEX ^ sxt_imm_AGEX;
-    `SLT_I: arith_AGEX = {31'b0,(rs1_val_AGEX < rs2_val_AGEX)}; 
-    `SLTI_I: arith_AGEX = {31'b0,(rs1_val_AGEX < sxt_imm_AGEX)}; 
+    `SLT_I: arith_AGEX = {31'b0,(rs1_val_AGEX < rs2_val_AGEX)};
+    `SLTI_I: arith_AGEX = {31'b0,(rs1_val_AGEX < sxt_imm_AGEX)};
     `SLTU_I: arith_AGEX = {31'b0, (rs1_val_unsigned < rs2_val_unsigned)};
     `SLTIU_I: arith_AGEX = {31'b0, (rs1_val_unsigned < imm_unsigned)};
     //`SRA_I: arith_AGEX = rs1_val_AGEX >>> {{20{rs2_val_AGEX[4]}},rs2_val_AGEX[4:0]}; // todo check
@@ -104,6 +104,7 @@ module AGEX_STAGE(
   always @(*) begin
     case(op_I_AGEX)
       `LW_I: memaddr_AGEX = (rs1_val_AGEX + sxt_imm_AGEX) ;
+      `SW_I: memaddr_AGEX = (rs1_val_AGEX + sxt_imm_AGEX) ;
     endcase
   end
 
