@@ -9,6 +9,9 @@
   `define STARTPC   32'h200
   `define WBCOUNTERS  8
 
+  `define BPBITS 8
+  `define BTBBITS 4
+
   //Memory mapped IO
   `define ADDRLEDR  32'hFFFFF020
   `define ADDRKEY   32'hFFFFF080
@@ -221,7 +224,9 @@
 
   `define from_WB_to_MEM_WIDTH (1)
 
-
-
+  `define from_DE_to_BP_WIDTH (1 + `DBITS)
+  `define from_AGEX_to_BP_WIDTH (1 + 1 + `DBITS + `DBITS)
+  `define from_BP_to_DE_WIDTH (`DBITS)
+  `define from_BP_to_AGEX_WIDTH (1)
 
 `endif
