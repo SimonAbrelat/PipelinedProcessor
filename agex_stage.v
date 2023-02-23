@@ -164,8 +164,10 @@ module AGEX_STAGE(
 assign from_AGEX_to_BP = {
                           (op_I_AGEX >= `BEQ_I && op_I_AGEX <=`BGEU_I),
                           br_cond_AGEX,
-                          bht_idx_AGEX, // TODO
-                          pctarget_AGEX,
+                          bht_idx_AGEX, 
+                          //pctarget_AGEX,
+                          pcplus_AGEX + sxt_imm_AGEX,// we want to send the branch target if taken, not the actual decision
+                          // TODO check this ^^^^^^
                           pcplus_AGEX
                           };
 

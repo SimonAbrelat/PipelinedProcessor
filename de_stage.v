@@ -439,7 +439,7 @@ module BRANCH_PREDICTOR(
     end else begin
       if (is_branch_update_BP) begin
         branch_hist_reg_BP = branch_hist_reg_BP << 1 | {7'b0, update_dir_BP};
-        //if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin //TODO btb index by PC
+        //if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin 
         if (update_dir_BP) begin
           if (pattern_hist_table_BP[update_pht_idx_BP] < 3)
             pattern_hist_table_BP[update_pht_idx_BP] <= pattern_hist_table_BP[update_pht_idx_BP] + 1;
@@ -451,9 +451,9 @@ module BRANCH_PREDICTOR(
     end
   end
 
-  always @(negedge clk) begin // TODO btb indexed by PC
+  always @(negedge clk) begin 
     //if (!reset && is_branch_update_BP && update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin
-    if (!reset && is_branch_update_BP ) begin
+    if (!reset && is_branch_update_BP ) begin  // TODO update with branch target even if not taken?
       branch_target_buffer_BP[pc_from_AGEX_BP[5:2]] <= {pc_from_AGEX_BP[25:0],1'b1, update_target_BP};
     end
   end

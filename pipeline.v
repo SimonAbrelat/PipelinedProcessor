@@ -61,7 +61,6 @@ module pipeline (
   input wire [`from_AGEX_to_BP_WIDTH-1:0] from_AGEX,
   output wire [`from_BP_to_DE_WIDTH-1:0] to_DE,
   output wire [`from_BP_to_AGEX_WIDTH-1:0] to_AGEX */
-  // TODO SIMON FINISH THIS
   BRANCH_PREDICTOR my_BP(
     .clk(clk),
     .reset(reset),
