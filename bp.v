@@ -14,6 +14,7 @@ module BRANCH_PREDICTOR(
   reg [27+`DBITS-1:0] branch_target_buffer_BP [15:0]; // BTB -- use 4 bits to index
   // [tag(top 26 bits), valid, target(bottom dbits)]
   // the 27 comes from tag and valid bits, the DBITS for the actual address
+  // Tag: the lower 27 bits of the PC that is the branch
   // per https://piazza.com/class/lcp4sh03g603oy/post/144
 
   // Fetches prediction information from decode
@@ -28,22 +29,23 @@ module BRANCH_PREDICTOR(
   wire [`DBITS-1:0] PC_target_BP;
   //assign pred_target_BP = (pattern_hist_BP[pred_idx_BP[3:0]] >= 2) ? branch_target_BP[pred_idx_BP[3:0]] : pred_PC_BP + 4;
   // TODO bit twiddling -- indices may need fixes
-  assign PC_target_BP = ((branch_target_buffer_BP[PC_from_DE_BP[6:2]][`DBITS])            // BTB valid
-    && (branch_target_buffer_BP[PC_from_DE_BP[6:2]][58:`DBITS+1] == PC_from_DE_BP[25:0]) // BTB hit
+  assign PC_target_BP = ((branch_target_buffer_BP[PC_from_DE_BP[5:2]][`DBITS])            // BTB valid
+    && (branch_target_buffer_BP[PC_from_DE_BP[5:2]][58:`DBITS+1] == PC_from_DE_BP[25:0]) // BTB hit
     && (pattern_hist_table_BP[pht_idx_BP] >= 2)) ?                                      // predicted taken
-    branch_target_buffer_BP[PC_from_DE_BP[6:2]] : PC_from_DE_BP + 4;
+    branch_target_buffer_BP[PC_from_DE_BP[5:2]][`DBITS-1:0] : PC_from_DE_BP + 4;
 
 
 
 
   // Fetches update information
-  wire val_update_BP;
+  wire is_branch_update_BP;
   wire update_dir_BP;
   wire [`BPBITS-1:0] update_idx_BP;
-  wire [`BPBITS-1:0] update_idx_BP;
+  //wire [`BPBITS-1:0] update_idx_BP;
   wire [`DBITS-1:0] update_target_BP;
+  wire [`DBITS-1:0] pc_from_AGEX_BP;
 
-  assign {val_update_BP, update_dir_BP, update_idx_BP, update_target_BP} = from_AGEX;
+  assign {is_branch_update_BP, update_dir_BP, update_idx_BP, update_target_BP, pc_from_AGEX_BP} = from_AGEX;
 
   // Combinational logic
   assign branch_hist_reg_BP = branch_hist_reg_BP << 1 | {7'b0, update_dir_BP};
@@ -54,8 +56,9 @@ module BRANCH_PREDICTOR(
         pattern_hist_table_BP[i] <= 01;
       end
     end else begin
-      if (val_update_BP) begin
-        if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin //TODO btb index by PC
+      if (is_branch_update_BP) begin
+        //if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin //TODO btb index by PC
+        if (update_dir_BP) begin
           if (pattern_hist_table_BP[update_idx_BP] < 3)
             pattern_hist_table_BP[update_idx_BP] <= pattern_hist_table_BP[update_idx_BP] + 1;
         end else begin
@@ -67,8 +70,9 @@ module BRANCH_PREDICTOR(
   end
 
   always @(negedge clk) begin // TODO btb indexed by PC
-    if (!reset && val_update_BP && update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin
-      branch_target_buffer_BP[update_idx_BP] <= update_target_BP;
+    //if (!reset && is_branch_update_BP && update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin
+    if (!reset && is_branch_update_BP ) begin
+      branch_target_buffer_BP[pc_from_AGEX_BP[5:2]] <= {pc_from_AGEX_BP[25:0],1'b1, update_target_BP};
     end
   end
 

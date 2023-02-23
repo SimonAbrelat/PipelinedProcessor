@@ -205,7 +205,7 @@
 /** please update the following define with your own values */
 
  `define FE_latch_WIDTH  (1 + `INSTBITS+`DBITS+ `DBITS + `DBITS)
-  `define DE_latch_WIDTH  (1 + `INSTBITS+`DBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS + `DBITS+ `DBITS)
+  `define DE_latch_WIDTH  (1 + `INSTBITS+`DBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS + `DBITS+ `DBITS + `BPBITS)
 
   `define AGEX_latch_WIDTH   (1 + `INSTBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS + `DBITS)
   `define MEM_latch_WIDTH    (1 + `INSTBITS+`DBITS+ `IOPBITS + `TYPENOBITS + `DBITS + `DBITS)
@@ -225,7 +225,7 @@
   `define from_WB_to_MEM_WIDTH (1)
 
   `define from_DE_to_BP_WIDTH (1 + `DBITS)
-  `define from_AGEX_to_BP_WIDTH (1 + 1 + `DBITS + `DBITS)
+  `define from_AGEX_to_BP_WIDTH (1 + 1 + `BPBITS + `DBITS + `DBITS)
   `define from_BP_to_DE_WIDTH (`DBITS)
   `define from_BP_to_AGEX_WIDTH (1)
 

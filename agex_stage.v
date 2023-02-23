@@ -9,7 +9,8 @@ module AGEX_STAGE(
   input wire [`DE_latch_WIDTH-1:0] from_DE_latch,
   output wire [`AGEX_latch_WIDTH-1:0] AGEX_latch_out,
   output wire [`from_AGEX_to_FE_WIDTH-1:0] from_AGEX_to_FE,
-  output wire [`from_AGEX_to_DE_WIDTH-1:0] from_AGEX_to_DE
+  output wire [`from_AGEX_to_DE_WIDTH-1:0] from_AGEX_to_DE,
+  output wire [`from_AGEX_to_BP_WIDTH-1:0] from_AGEX_to_BP
 );
 
   `UNUSED_VAR (from_MEM_to_AGEX)
@@ -44,6 +45,7 @@ module AGEX_STAGE(
   assign rs2_val_unsigned = rs2_val_AGEX;
   assign imm_unsigned = sxt_imm_AGEX;
 
+  wire[`BPBITS-1:0] bht_idx_AGEX;
 
 
 
@@ -139,7 +141,8 @@ module AGEX_STAGE(
                                 inst_count_AGEX,
                                 sxt_imm_AGEX,
                                 rs1_val_AGEX, // TODO: sometimes goes high when in a stall
-                                rs2_val_AGEX
+                                rs2_val_AGEX,
+                                bht_idx_AGEX
                                         // more signals might need
                                 } = from_DE_latch;
 
@@ -155,6 +158,16 @@ module AGEX_STAGE(
                                 memaddr_AGEX
                                        // more signals might need
                                  };
+
+// is_branch_update_BP, update_dir_BP, update_idx_BP, update_target_BP, pc_from_AGEX_BP
+
+assign from_AGEX_to_BP = {
+                          (op_I_AGEX >= `BEQ_I && op_I_AGEX <=`BGEU_I),
+                          br_cond_AGEX,
+                          bht_idx_AGEX, // TODO
+                          pctarget_AGEX,
+                          pcplus_AGEX
+                          }
 
   always @ (posedge clk ) begin
     if(reset) begin
