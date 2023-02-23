@@ -167,7 +167,7 @@ assign from_AGEX_to_BP = {
                           bht_idx_AGEX, // TODO
                           pctarget_AGEX,
                           pcplus_AGEX
-                          }
+                          };
 
   always @ (posedge clk ) begin
     if(reset) begin

@@ -8,8 +8,10 @@ module DE_STAGE(
   input wire [`from_AGEX_to_DE_WIDTH-1:0] from_AGEX_to_DE,
   input wire [`from_MEM_to_DE_WIDTH-1:0] from_MEM_to_DE,
   input wire [`from_WB_to_DE_WIDTH-1:0] from_WB_to_DE,
+  input wire [`from_BP_to_DE_WIDTH-1:0] from_BP_to_DE,
   output wire [`from_DE_to_FE_WIDTH-1:0] from_DE_to_FE,
-  output wire [`DE_latch_WIDTH-1:0] DE_latch_out
+  output wire [`DE_latch_WIDTH-1:0] DE_latch_out,
+  output wire[`from_DE_to_BP_WIDTH-1:0] from_DE_to_BP
 );
 
   `UNUSED_VAR (from_MEM_to_DE)
@@ -308,6 +310,13 @@ end
                                   // more signals might need
                                   };
 
+  // BP stuff
+  wire[`BPBITS-1:0] pht_idx_DE;
+  assign pht_idx_DE = from_BP_to_DE;
+  assign from_DE_to_BP = { // is_branch , pc
+                          (op_I_DE >= `BEQ_I && op_I_DE <=`BGEU_I),
+                          pcplus_DE
+                          };
 
 
 
@@ -379,12 +388,12 @@ module BRANCH_PREDICTOR(
   input wire reset,
   input wire [`from_DE_to_BP_WIDTH-1:0] from_DE,
   input wire [`from_AGEX_to_BP_WIDTH-1:0] from_AGEX,
-  output wire [`from_BP_to_DE_WIDTH-1:0] to_DE,
-  output wire [`from_BP_to_AGEX_WIDTH-1:0] to_AGEX
+  output wire [`from_BP_to_DE_WIDTH-1:0] to_DE
+  //output wire [`from_BP_to_AGEX_WIDTH-1:0] to_AGEX
 );
 
-  reg [`BPBITS-1:0] branch_hist_reg_BP;            // BHR
   reg [1:0] pattern_hist_table_BP [255:0];        // PHT -- use 8 bits to index
+  reg [`BPBITS-1:0] branch_hist_reg_BP;            // BHR
   reg [27+`DBITS-1:0] branch_target_buffer_BP [15:0]; // BTB -- use 4 bits to index
   // [tag(top 26 bits), valid, target(bottom dbits)]
   // the 27 comes from tag and valid bits, the DBITS for the actual address
@@ -414,15 +423,13 @@ module BRANCH_PREDICTOR(
   // Fetches update information
   wire is_branch_update_BP;
   wire update_dir_BP;
-  wire [`BPBITS-1:0] update_idx_BP;
+  wire [`BPBITS-1:0] update_pht_idx_BP;
   //wire [`BPBITS-1:0] update_idx_BP;
   wire [`DBITS-1:0] update_target_BP;
   wire [`DBITS-1:0] pc_from_AGEX_BP;
 
-  assign {is_branch_update_BP, update_dir_BP, update_idx_BP, update_target_BP, pc_from_AGEX_BP} = from_AGEX;
+  assign {is_branch_update_BP, update_dir_BP, update_pht_idx_BP, update_target_BP, pc_from_AGEX_BP} = from_AGEX;
 
-  // Combinational logic
-  assign branch_hist_reg_BP = branch_hist_reg_BP << 1 | {7'b0, update_dir_BP};
 
   always @(posedge clk) begin
     if (reset) begin
@@ -431,13 +438,14 @@ module BRANCH_PREDICTOR(
       end
     end else begin
       if (is_branch_update_BP) begin
+        branch_hist_reg_BP = branch_hist_reg_BP << 1 | {7'b0, update_dir_BP};
         //if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin //TODO btb index by PC
         if (update_dir_BP) begin
-          if (pattern_hist_table_BP[update_idx_BP] < 3)
-            pattern_hist_table_BP[update_idx_BP] <= pattern_hist_table_BP[update_idx_BP] + 1;
+          if (pattern_hist_table_BP[update_pht_idx_BP] < 3)
+            pattern_hist_table_BP[update_pht_idx_BP] <= pattern_hist_table_BP[update_pht_idx_BP] + 1;
         end else begin
-          if (pattern_hist_table_BP[update_idx_BP] > 0)
-            pattern_hist_table_BP[update_idx_BP] <= pattern_hist_table_BP[update_idx_BP] - 1;
+          if (pattern_hist_table_BP[update_pht_idx_BP] > 0)
+            pattern_hist_table_BP[update_pht_idx_BP] <= pattern_hist_table_BP[update_pht_idx_BP] - 1;
         end
       end
     end
@@ -449,6 +457,8 @@ module BRANCH_PREDICTOR(
       branch_target_buffer_BP[pc_from_AGEX_BP[5:2]] <= {pc_from_AGEX_BP[25:0],1'b1, update_target_BP};
     end
   end
+  
 
+  assign to_DE = pht_idx_BP;
 
 endmodule

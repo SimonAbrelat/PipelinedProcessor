@@ -226,7 +226,7 @@
 
   `define from_DE_to_BP_WIDTH (1 + `DBITS)
   `define from_AGEX_to_BP_WIDTH (1 + 1 + `BPBITS + `DBITS + `DBITS)
-  `define from_BP_to_DE_WIDTH (`DBITS)
+  `define from_BP_to_DE_WIDTH (`BPBITS)
   `define from_BP_to_AGEX_WIDTH (1)
 
 `endif
