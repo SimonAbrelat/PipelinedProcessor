@@ -46,6 +46,8 @@ module AGEX_STAGE(
   assign imm_unsigned = sxt_imm_AGEX;
 
   wire[`BPBITS-1:0] bht_idx_AGEX;
+  wire bp_dir_AGEX;
+  wire BTB_hit_AGEX;
 
 
 
@@ -128,8 +130,30 @@ module AGEX_STAGE(
     end
   end
 
+  /*
   assign from_AGEX_to_FE = {br_cond_AGEX, pctarget_AGEX};
   assign from_AGEX_to_DE = {br_cond_AGEX, inst_AGEX[11:7], type_I_AGEX};
+
+  assign from_AGEX_to_FE = {br_cond_AGEX != bp_dir_AGEX, (br_cond_AGEX) ? PC_AGEX + sxt_imm_AGEX : pcplus_AGEX + 4};
+  assign from_AGEX_to_DE = {br_cond_AGEX != bp_dir_AGEX, inst_AGEX[11:7], type_I_AGEX};
+  */
+
+
+  wire is_branch_agex;
+  assign is_branch_agex = (op_I_AGEX >= `BEQ_I && op_I_AGEX <= `BGEU_I);
+
+  // only bubble on a mispred or btb miss and is branch
+  assign from_AGEX_to_FE = {
+    (is_branch_agex && (br_cond_AGEX != bp_dir_AGEX || !BTB_hit_AGEX)),
+    //pctarget_AGEX
+    PC_AGEX + sxt_imm_AGEX
+  };
+  assign from_AGEX_to_DE = {
+    (is_branch_agex && (br_cond_AGEX != bp_dir_AGEX || !BTB_hit_AGEX)),
+    inst_AGEX[11:7],
+    type_I_AGEX
+  };
+
 
   assign {
                                 valid_AGEX,
@@ -142,7 +166,9 @@ module AGEX_STAGE(
                                 sxt_imm_AGEX,
                                 rs1_val_AGEX, // TODO: sometimes goes high when in a stall
                                 rs2_val_AGEX,
-                                bht_idx_AGEX
+                                bp_dir_AGEX,
+                                bht_idx_AGEX,
+                                BTB_hit_AGEX
                                         // more signals might need
                                 } = from_DE_latch;
 
@@ -164,7 +190,8 @@ module AGEX_STAGE(
 assign from_AGEX_to_BP = {
                           (op_I_AGEX >= `BEQ_I && op_I_AGEX <=`BGEU_I),
                           br_cond_AGEX,
-                          bht_idx_AGEX, 
+                          bp_dir_AGEX,
+                          bht_idx_AGEX,
                           //pctarget_AGEX,
                           pcplus_AGEX + sxt_imm_AGEX,// we want to send the branch target if taken, not the actual decision
                           // TODO check this ^^^^^^

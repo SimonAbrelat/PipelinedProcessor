@@ -279,8 +279,6 @@ end
         || ((op_Type_MEM != 0 && op_Type_MEM != `S_Type) && ((rd_MEM == rs1_DE) || (rd_MEM == rs2_DE))));
   end
 
-  assign from_DE_to_FE = {pipeline_stall_DE}; // pass the DE stage stall signal to FE stage
-
 
 // decoding the contents of FE latch out. the order should be matched with the fe_stage.v
   assign {
@@ -306,17 +304,23 @@ end
                                   sxt_imm_DE,
                                   regs[rs1_DE],
                                   regs[rs2_DE],
-                                  pht_idx_DE
+                                  BP_dir_DE,
+                                  pht_idx_DE,
+                                  BTB_hit_DE
                                   // more signals might need
                                   };
 
   // BP stuff
-  wire[`BPBITS-1:0] pht_idx_DE;
-  assign pht_idx_DE = from_BP_to_DE;
+  wire BP_dir_DE;
+  wire [`BPBITS-1:0] pht_idx_DE;
+  wire BTB_hit_DE;
+  assign {BP_dir_DE, pht_idx_DE, BTB_hit_DE} = from_BP_to_DE;
   assign from_DE_to_BP = { // is_branch , pc
                           (op_I_DE >= `BEQ_I && op_I_DE <=`BGEU_I),
                           pcplus_DE
                           };
+
+  assign from_DE_to_FE = {pipeline_stall_DE}; // pass the DE stage stall signal to FE stage
 
 
 
@@ -388,6 +392,7 @@ module BRANCH_PREDICTOR(
   input wire reset,
   input wire [`from_DE_to_BP_WIDTH-1:0] from_DE,
   input wire [`from_AGEX_to_BP_WIDTH-1:0] from_AGEX,
+  output wire [`from_BP_to_FE_WIDTH-1:0] to_FE,
   output wire [`from_BP_to_DE_WIDTH-1:0] to_DE
   //output wire [`from_BP_to_AGEX_WIDTH-1:0] to_AGEX
 );
@@ -417,18 +422,22 @@ module BRANCH_PREDICTOR(
     && (pattern_hist_table_BP[pht_idx_BP] >= 2)) ?                                      // predicted taken
     branch_target_buffer_BP[PC_from_DE_BP[5:2]][`DBITS-1:0] : PC_from_DE_BP + 4;
 
+  wire pht_predict_BP;
+  assign pht_predict_BP = (pattern_hist_table_BP[pht_idx_BP] >= 2);
+
 
 
 
   // Fetches update information
   wire is_branch_update_BP;
-  wire update_dir_BP;
+  wire actual_dir_BP;
+  wire predicted_dir_BP;
   wire [`BPBITS-1:0] update_pht_idx_BP;
   //wire [`BPBITS-1:0] update_idx_BP;
   wire [`DBITS-1:0] update_target_BP;
   wire [`DBITS-1:0] pc_from_AGEX_BP;
 
-  assign {is_branch_update_BP, update_dir_BP, update_pht_idx_BP, update_target_BP, pc_from_AGEX_BP} = from_AGEX;
+  assign {is_branch_update_BP, actual_dir_BP, predicted_dir_BP, update_pht_idx_BP, update_target_BP, pc_from_AGEX_BP} = from_AGEX;
 
 
   always @(posedge clk) begin
@@ -438,9 +447,8 @@ module BRANCH_PREDICTOR(
       end
     end else begin
       if (is_branch_update_BP) begin
-        branch_hist_reg_BP = branch_hist_reg_BP << 1 | {7'b0, update_dir_BP};
-        //if(update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin 
-        if (update_dir_BP) begin
+        branch_hist_reg_BP <= branch_hist_reg_BP << 1 | {7'b0, actual_dir_BP};
+        if (actual_dir_BP) begin
           if (pattern_hist_table_BP[update_pht_idx_BP] < 3)
             pattern_hist_table_BP[update_pht_idx_BP] <= pattern_hist_table_BP[update_pht_idx_BP] + 1;
         end else begin
@@ -451,14 +459,18 @@ module BRANCH_PREDICTOR(
     end
   end
 
-  always @(negedge clk) begin 
+  always @(negedge clk) begin
     //if (!reset && is_branch_update_BP && update_target_BP == branch_target_buffer_BP[update_idx_BP]) begin
     if (!reset && is_branch_update_BP ) begin  // TODO update with branch target even if not taken?
       branch_target_buffer_BP[pc_from_AGEX_BP[5:2]] <= {pc_from_AGEX_BP[25:0],1'b1, update_target_BP};
     end
   end
-  
 
-  assign to_DE = pht_idx_BP;
+
+  assign to_DE = {pht_predict_BP, pht_idx_BP,
+                  (branch_target_buffer_BP[PC_from_DE_BP[5:2]][`DBITS])   // BTB valid & hit
+                  && (branch_target_buffer_BP[PC_from_DE_BP[5:2]][58:`DBITS+1] == PC_from_DE_BP[25:0])};
+  //assign to_FE = {is_branch_DE_BP && (actual_dir_BP == predicted_dir_BP), PC_target_BP};
+  assign to_FE = {is_branch_DE_BP, pht_predict_BP, PC_target_BP};
 
 endmodule

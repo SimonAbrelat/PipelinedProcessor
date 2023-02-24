@@ -8,6 +8,7 @@ module FE_STAGE(
   input wire [`from_AGEX_to_FE_WIDTH-1:0] from_AGEX_to_FE,
   input wire [`from_MEM_to_FE_WIDTH-1:0] from_MEM_to_FE,
   input wire [`from_WB_to_FE_WIDTH-1:0] from_WB_to_FE,
+  input wire [`from_BP_to_FE_WIDTH-1:0] from_BP_to_FE,
   output wire [`FE_latch_WIDTH-1:0] FE_latch_out
 );
 
@@ -49,9 +50,15 @@ module FE_STAGE(
   wire [`FE_latch_WIDTH-1:0] FE_latch_contents;  // the signals that will be FE latch contents
 
   wire [`DBITS-1:0] PC_Target;
-  wire branch_cond;
+  wire branch_cond; // should only be high if there's a mispred / btb miss and we have to bubble from agex
 
   assign {branch_cond, PC_Target} = from_AGEX_to_FE;
+
+
+  wire is_branch_DE_FE;
+  wire pht_predict_BP_FE;
+  wire [`DBITS-1:0] PC_target_BP_FE;
+  assign {is_branch_DE_FE, pht_predict_BP_FE, PC_target_BP_FE} = from_BP_to_FE;
 
   // reading instruction from imem
   assign inst_FE = imem[PC_FE_latch[`IMEMADDRBITS-1:`IMEMWORDBITS]];  // this code works. imem is stored 4B together
@@ -89,6 +96,10 @@ module FE_STAGE(
       end
       else if(branch_cond) begin
         PC_FE_latch <= PC_Target;
+        inst_count_FE <= inst_count_FE + 1;
+      end
+      else if (is_branch_DE_FE && pht_predict_BP_FE) begin
+        PC_FE_latch <= PC_target_BP_FE;
         inst_count_FE <= inst_count_FE + 1;
       end
       else if(!stall_pipe_FE) begin

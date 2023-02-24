@@ -29,6 +29,7 @@ module pipeline (
   wire [`from_WB_to_MEM_WIDTH-1:0] from_WB_to_MEM;
 
   wire [`from_DE_to_BP_WIDTH-1:0] from_DE_to_BP;
+  wire [`from_BP_to_FE_WIDTH-1:0] from_BP_to_FE;
   wire [`from_BP_to_DE_WIDTH-1:0] from_BP_to_DE;
   wire[`from_AGEX_to_BP_WIDTH-1:0] from_AGEX_to_BP;
   //wire[`from_BP_to_AGEX_WIDTH-1:0] from_BP_to_AGEX;// do we even need this
@@ -40,6 +41,7 @@ module pipeline (
     .from_AGEX_to_FE(from_AGEX_to_FE),
     .from_MEM_to_FE(from_MEM_to_FE),
     .from_WB_to_FE(from_WB_to_FE),
+    .from_BP_to_FE(from_BP_to_FE),
     .FE_latch_out(FE_latch_out)
   );
 
@@ -66,6 +68,7 @@ module pipeline (
     .reset(reset),
     .from_DE(from_DE_to_BP),
     .from_AGEX(from_AGEX_to_BP),
+    .to_FE(from_BP_to_FE),
     .to_DE(from_BP_to_DE)
     //.to_AGEX(to_AGEX)
   );
